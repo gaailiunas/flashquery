@@ -4,10 +4,10 @@ project(flashquery)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(flashquery
-    src/main.cc
-    src/document.cc
-    src/lexer.cc
-    src/parser.cc
-    src/selector.cc
+    src/main.cpp
+    src/document.cpp
+    src/lexer.cpp
+    src/parser.cpp
+    src/selector.cpp
 )
 target_include_directories(flashquery PRIVATE include)
