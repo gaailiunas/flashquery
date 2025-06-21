@@ -1,5 +1,5 @@
-#ifndef _FLASHQUERY_DOCUMENT_HPP
-#define _FLASHQUERY_DOCUMENT_HPP
+#ifndef FLASHQUERY_DOCUMENT_HPP
+#define FLASHQUERY_DOCUMENT_HPP
 
 #include <string_view>
 
@@ -12,4 +12,4 @@ public:
 
 } // namespace flashquery
 
-#endif // _FLASHQUERY_DOCUMENT_HPP
+#endif // FLASHQUERY_DOCUMENT_HPP
