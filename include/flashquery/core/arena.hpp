@@ -12,13 +12,12 @@ namespace flashquery {
 
 class Arena {
 public:
-    explicit Arena(const std::size_t sz)
+    explicit Arena(const std::size_t sz) : offset(0)
     {
         this->memory = static_cast<char *>(std::malloc(sz));
         if (!this->memory)
             throw std::bad_alloc();
         this->memory_size = sz;
-        this->offset = 0;
     }
 
     ~Arena()
@@ -31,18 +30,25 @@ public:
         static_assert(std::is_trivially_destructible_v<T>);
 
         char *unaligned = this->memory + this->offset;
-        T *aligned = this->align_ptr_up<T>(unaligned);
-        std::size_t new_offset = static_cast<char *>(aligned) - this->memory + alignof(T) * N;
+        T *aligned = this->align_ptr_up<T>(reinterpret_cast<T *>(unaligned));
+        std::size_t aligned_offset = reinterpret_cast<char *>(aligned) - this->memory;
+        std::size_t new_offset = aligned_offset + sizeof(T) * N;
 
         if (new_offset > this->memory_size) {
             std::size_t new_size = this->memory_size * 2;
+
             if (new_offset > new_size)
                 new_size = new_offset;
+
             char *tmp = static_cast<char *>(std::realloc(this->memory, new_size));
             if (!tmp)
                 throw std::bad_alloc();
+
             this->memory = tmp;
             this->memory_size = new_size;
+       
+            unaligned = this->memory + this->offset;
+            aligned = this->align_ptr_up<T>(reinterpret_cast<T *>(unaligned));
         }
 
         this->offset = new_offset;
