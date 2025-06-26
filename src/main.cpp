@@ -4,10 +4,19 @@
 #include <iostream>
 #include <cassert>
 
+#include <fstream>
+#include <sstream>
+
 int main(void)
 {
+    /* load dataset */
+    std::ifstream dataset("./datasets/x.com.txt");
+    std::stringstream buf;
+    buf << dataset.rdbuf();
+    std::string data = buf.str();
+
     flashquery::Arena arena(1024);
-    flashquery::Lexer lexer(arena, "<html></html>");
+    flashquery::Lexer lexer(arena, data);
 
     bool r = lexer.begin();
     assert(r == true);

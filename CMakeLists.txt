@@ -12,3 +12,5 @@ add_executable(flashquery
 )
 
 target_include_directories(flashquery PRIVATE include)
+
+file(COPY ${CMAKE_SOURCE_DIR}/datasets DESTINATION ${CMAKE_BINARY_DIR})
