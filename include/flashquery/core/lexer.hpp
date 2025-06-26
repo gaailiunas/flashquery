@@ -9,7 +9,19 @@ namespace flashquery {
 enum class TokenType {
     TAG_OPEN,
     TAG_CLOSE,
+    TAG_SLASH,
+    TAG_NAME,
 };
+
+inline static const char *token_to_str(const TokenType &type) {
+    switch (type) {
+        case TokenType::TAG_OPEN: return "TAG_OPEN";
+        case TokenType::TAG_CLOSE: return "TAG_CLOSE";
+        case TokenType::TAG_SLASH: return "TAG_SLASH";
+        case TokenType::TAG_NAME: return "TAG_NAME";
+        default: return "UNKNOWN";
+    }
+}
 
 struct Token {
     TokenType type; 
@@ -39,6 +51,8 @@ public:
 private:
     /* states */
     bool tag_open; 
+    std::size_t text_len;
+    bool tag_name;
 
     Arena &_arena;
     std::string_view html_data;
