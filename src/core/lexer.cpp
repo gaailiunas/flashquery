@@ -1,78 +1,66 @@
-#include <cstddef>
-#include <cstdlib>
 #include <flashquery/core/lexer.hpp>
 #include <string_view>
 
 flashquery::Lexer::Lexer(Arena &arena, const std::string_view &html)
-    : _arena(arena), html_data(html), tokens{0}, tag_open(false), text_len(0),
+    : _arena(arena), html_data(html), index(0), tokens{0}, tag_open(false), text_len(0),
     tag_name(false), kv_attr(false)
 {
 }
 
 bool flashquery::Lexer::begin()
 {
-    for (std::size_t i = 0; i < this->html_data.length(); i++) {
+    for (; this->index < this->html_data.length(); this->index++) {
         if (this->tag_open) {
-            if (this->html_data[i] == '>') {
+            if (this->html_data[this->index] == '>') {
                 if (this->text_len > 0) {
+                    // TODO: make a function of this portion as it is repetitive to the next else if statement
                     if (!this->tag_name) {
-                        this->add_token(TokenType::TAG_NAME, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                        this->feed_text(TokenType::TAG_NAME);
                         this->tag_name = true;
                     }
                     else if (this->kv_attr) {
-                        this->add_token(TokenType::TAG_ATTR_VALUE, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                        this->feed_text(TokenType::TAG_ATTR_VALUE);
                         this->kv_attr = false;
                     }
                     else {
-                        this->add_token(TokenType::TAG_ATTR, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                        this->feed_text(TokenType::TAG_ATTR);
                     }
-                    this->text_len = 0;
                 }
                 this->tag_open = false;
                 this->add_token(TokenType::TAG_CLOSE);
                 continue;
             }
-            else if (this->html_data[i] == ' ') {
+            else if (this->html_data[this->index] == ' ') {
                 if (!this->tag_name) {
-                    this->add_token(TokenType::TAG_NAME, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    this->feed_text(TokenType::TAG_NAME);
                     this->tag_name = true;
                 }
                 else if (this->kv_attr) {
-                    this->add_token(TokenType::TAG_ATTR_VALUE, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    this->feed_text(TokenType::TAG_ATTR_VALUE);
                     this->kv_attr = false;
                 }
                 else {
-                    this->add_token(TokenType::TAG_ATTR, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    this->feed_text(TokenType::TAG_ATTR);
                 }
-                this->text_len = 0;
                 continue;
             }
-            else if (this->html_data[i] == '=') {
+            else if (this->html_data[this->index] == '=') {
                 this->kv_attr = true;
-                this->add_token(TokenType::TAG_ATTR_KEY, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
-                this->text_len = 0;
+                this->feed_text(TokenType::TAG_ATTR_KEY);
                 continue;
             }
         }
         else {
-            if (this->html_data[i] == '<') {
-                if (this->text_len > 0) {
-                    this->add_token(TokenType::TEXT, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
-                    this->text_len = 0;
-                }
-
+            if (this->html_data[this->index] == '<') {
+                this->feed_text(TokenType::TEXT);
                 this->tag_open = true;
-
-                // reset all states
-                this->tag_name = false;
-                this->kv_attr = false;
-                this->text_len = 0;
+                this->reset();
 
                 this->add_token(TokenType::TAG_OPEN);
-                if (i + 1 < this->html_data.length()) {
-                    if (this->html_data[i + 1] == '/') {
+                if (this->index + 1 < this->html_data.length()) {
+                    if (this->html_data[this->index + 1] == '/') {
                         this->add_token(TokenType::TAG_SLASH);
-                        i += 1;
+                        this->index++;
                     }
                 }
                 continue;
@@ -92,3 +80,14 @@ void flashquery::Lexer::add_token(const TokenType &type, const std::string_view 
     this->tokens.len++;
 }
 
+void flashquery::Lexer::feed_text(const TokenType &type)
+{
+    this->add_token(type, std::string_view(this->html_data.data() - this->text_len + this->index, this->text_len));
+    this->text_len = 0;
+}
+
+void flashquery::Lexer::reset()
+{
+    this->tag_name = false;
+    this->kv_attr = false;
+}

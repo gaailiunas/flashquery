@@ -64,10 +64,13 @@ private:
 
     Arena &_arena;
     std::string_view html_data;
+    std::size_t index;
     
     TokenArray tokens;
 
     void add_token(const TokenType &type, const std::string_view &elem = "");
+    void feed_text(const TokenType &type);
+    void reset();
 };
 
 } // namespace flashquery
