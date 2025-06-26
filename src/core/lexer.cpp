@@ -4,7 +4,8 @@
 #include <string_view>
 
 flashquery::Lexer::Lexer(Arena &arena, const std::string_view &html)
-    : _arena(arena), html_data(html), tokens{0}, tag_open(false), text_len(0), tag_name(false)
+    : _arena(arena), html_data(html), tokens{0}, tag_open(false), text_len(0),
+    tag_name(false), kv_attr(false)
 {
 }
 
@@ -16,18 +17,52 @@ bool flashquery::Lexer::begin()
                 if (this->text_len > 0) {
                     if (!this->tag_name) {
                         this->add_token(TokenType::TAG_NAME, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
-                        this->text_len = 0;
+                        this->tag_name = true;
                     }
+                    else if (this->kv_attr) {
+                        this->add_token(TokenType::TAG_ATTR_VALUE, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                        this->kv_attr = false;
+                    }
+                    this->text_len = 0;
                 }
                 this->tag_open = false;
                 this->add_token(TokenType::TAG_CLOSE);
                 continue;
             }
+            else if (this->html_data[i] == ' ') {
+                if (!this->tag_name) {
+                    this->add_token(TokenType::TAG_NAME, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    // is it script or style block?
+                    this->tag_name = true;
+                }
+                else if (this->kv_attr) {
+                    this->add_token(TokenType::TAG_ATTR_VALUE, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    this->kv_attr = false;
+                }
+                this->text_len = 0;
+                continue;
+            }
+            else if (this->html_data[i] == '=') {
+                this->kv_attr = true;
+                this->add_token(TokenType::TAG_ATTR_KEY, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                this->text_len = 0;
+                continue;
+            }
         }
         else {
             if (this->html_data[i] == '<') {
-                this->tag_name = false;
+                if (this->text_len > 0) {
+                    this->add_token(TokenType::TEXT, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    this->text_len = 0;
+                }
+
                 this->tag_open = true;
+
+                // reset all states
+                this->tag_name = false;
+                this->kv_attr = false;
+                this->text_len = 0;
+
                 this->add_token(TokenType::TAG_OPEN);
                 if (i + 1 < this->html_data.length()) {
                     if (this->html_data[i + 1] == '/') {
@@ -38,15 +73,16 @@ bool flashquery::Lexer::begin()
                 continue;
             }
         }
+
         this->text_len++;
     }
     return true;
 }
 
 
-void flashquery::Lexer::add_token(const TokenType &type, const std::string_view &k, const std::string_view &v)
+void flashquery::Lexer::add_token(const TokenType &type, const std::string_view &elem)
 {
-    Token *t = this->_arena.alloc<Token>(type, k, v);
+    Token *t = this->_arena.alloc<Token>(type, elem);
     this->tokens.arr = t - this->tokens.len; // incase reallocation occurs and base memory addr changes
     this->tokens.len++;
 }

@@ -25,7 +25,7 @@ int main(void)
     std::cout << "Total tokens: " << tokens.len << std::endl;
 
     for (std::size_t i = 0; i < tokens.len; i++) {
-        std::cout << "token_name=" << flashquery::token_to_str(tokens.arr[i].type) << " key=" << tokens.arr[i].key << " value=" << tokens.arr[i].value << std::endl;
+        std::cout << "token_name=" << flashquery::token_to_str(tokens.arr[i].type) << " elem=" << tokens.arr[i].element << std::endl;
     }
 
     return 0;
