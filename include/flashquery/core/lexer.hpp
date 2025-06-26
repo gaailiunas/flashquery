@@ -70,6 +70,9 @@ private:
 
     void add_token(const TokenType &type, const std::string_view &elem = "");
     void feed_text(const TokenType &type);
+
+    void process_tag();
+
     void reset();
 };
 

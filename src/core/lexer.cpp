@@ -13,35 +13,14 @@ bool flashquery::Lexer::begin()
         if (this->tag_open) {
             if (this->html_data[this->index] == '>') {
                 if (this->text_len > 0) {
-                    // TODO: make a function of this portion as it is repetitive to the next else if statement
-                    if (!this->tag_name) {
-                        this->feed_text(TokenType::TAG_NAME);
-                        this->tag_name = true;
-                    }
-                    else if (this->kv_attr) {
-                        this->feed_text(TokenType::TAG_ATTR_VALUE);
-                        this->kv_attr = false;
-                    }
-                    else {
-                        this->feed_text(TokenType::TAG_ATTR);
-                    }
+                    this->process_tag();
                 }
                 this->tag_open = false;
                 this->add_token(TokenType::TAG_CLOSE);
                 continue;
             }
             else if (this->html_data[this->index] == ' ') {
-                if (!this->tag_name) {
-                    this->feed_text(TokenType::TAG_NAME);
-                    this->tag_name = true;
-                }
-                else if (this->kv_attr) {
-                    this->feed_text(TokenType::TAG_ATTR_VALUE);
-                    this->kv_attr = false;
-                }
-                else {
-                    this->feed_text(TokenType::TAG_ATTR);
-                }
+                this->process_tag(); 
                 continue;
             }
             else if (this->html_data[this->index] == '=') {
@@ -84,6 +63,21 @@ void flashquery::Lexer::feed_text(const TokenType &type)
 {
     this->add_token(type, std::string_view(this->html_data.data() - this->text_len + this->index, this->text_len));
     this->text_len = 0;
+}
+
+void flashquery::Lexer::process_tag()
+{
+    if (!this->tag_name) {
+        this->feed_text(TokenType::TAG_NAME);
+        this->tag_name = true;
+    }
+    else if (this->kv_attr) {
+        this->feed_text(TokenType::TAG_ATTR_VALUE);
+        this->kv_attr = false;
+    }
+    else {
+        this->feed_text(TokenType::TAG_ATTR);
+    }
 }
 
 void flashquery::Lexer::reset()
