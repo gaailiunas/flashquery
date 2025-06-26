@@ -23,6 +23,9 @@ bool flashquery::Lexer::begin()
                         this->add_token(TokenType::TAG_ATTR_VALUE, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
                         this->kv_attr = false;
                     }
+                    else {
+                        this->add_token(TokenType::TAG_ATTR, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
+                    }
                     this->text_len = 0;
                 }
                 this->tag_open = false;
@@ -32,12 +35,14 @@ bool flashquery::Lexer::begin()
             else if (this->html_data[i] == ' ') {
                 if (!this->tag_name) {
                     this->add_token(TokenType::TAG_NAME, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
-                    // is it script or style block?
                     this->tag_name = true;
                 }
                 else if (this->kv_attr) {
                     this->add_token(TokenType::TAG_ATTR_VALUE, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
                     this->kv_attr = false;
+                }
+                else {
+                    this->add_token(TokenType::TAG_ATTR, std::string_view(this->html_data.data() - this->text_len + i, this->text_len));
                 }
                 this->text_len = 0;
                 continue;
