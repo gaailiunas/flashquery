@@ -12,7 +12,7 @@ namespace flashquery {
 
 class Arena {
 public:
-    explicit Arena(const std::size_t sz) : offset(0)
+    explicit Arena(std::size_t sz) : offset(0)
     {
         this->memory = static_cast<char *>(std::malloc(sz));
         if (!this->memory)
