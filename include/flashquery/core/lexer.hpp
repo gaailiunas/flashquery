@@ -61,14 +61,18 @@ private:
     std::size_t text_len;
     bool tag_name;
     bool kv_attr;
+    bool enforce;
 
     Arena &_arena;
     std::string_view html_data;
     std::size_t index;
+    const char *current_token;
     
     TokenArray tokens;
 
     void add_token(const TokenType &type, const std::string_view &elem = "");
+
+    inline std::string_view get_text();
     void feed_text(const TokenType &type);
 
     void process_tag();
